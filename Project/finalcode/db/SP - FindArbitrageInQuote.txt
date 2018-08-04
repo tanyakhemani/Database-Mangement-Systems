@@ -1,0 +1,65 @@
+DELIMITER $$
+ 
+CREATE PROCEDURE FindArbitrageInQuote()
+BEGIN
+
+ DECLARE v_finished INTEGER DEFAULT 0;
+ DECLARE v_buy_asset, v_sell_asset VARCHAR(10) DEFAULT "";
+ DECLARE v_buy_exchange, v_sell_exchange VARCHAR(100) DEFAULT "";
+ DECLARE v_buy_price, v_sell_price, v_max_qty, v_buy_size, v_sell_size DECIMAL(25,15) DEFAULT 0.0;
+ 
+ -- declare cursor to iterate over all possible asset pairs
+ DECLARE asset_pair_cursor CURSOR FOR
+  SELECT DISTINCT asset_id_base, asset_id_quote, MIN(ask_price), MAX(bid_price) FROM `quote` GROUP BY asset_id_base, asset_id_quote;
+  
+ -- declare NOT FOUND handler
+ DECLARE CONTINUE HANDLER
+    FOR NOT FOUND SET v_finished = 1;
+ 
+ CREATE TEMPORARY TABLE `arbitrage` (
+  `buy_asset` VARCHAR(10) NOT NULL,
+  `buy_exchange` VARCHAR(100) NOT NULL,
+  `buy_price` DECIMAL(25,15) NOT NULL,
+  `max_qty` DECIMAL(25,15) NOT NULL,
+  `sell_asset` VARCHAR(10) NOT NULL,
+  `sell_exchange` VARCHAR(100) NOT NULL,
+  `sell_price` DECIMAL(25,15) NOT NULL,
+  PRIMARY KEY (`buy_asset`,`sell_asset`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+ 
+ OPEN asset_pair_cursor;
+ 
+ get_asset_pair: LOOP
+ 
+	FETCH asset_pair_cursor INTO v_buy_asset, v_sell_asset, v_buy_price, v_sell_price;
+
+	IF v_finished = 1 THEN
+		LEAVE get_asset_pair;
+	END IF;
+ 
+	SELECT exchange_id, ask_size INTO v_buy_exchange, v_buy_size FROM `quote`
+	WHERE asset_id_base = v_buy_asset AND asset_id_quote = v_sell_asset AND ask_price = v_buy_price
+	LIMIT 1;
+  
+	SELECT exchange_id, bid_size INTO v_sell_exchange, v_sell_size FROM `quote`
+	WHERE asset_id_base = v_buy_asset AND asset_id_quote = v_sell_asset AND bid_price = v_sell_price
+	LIMIT 1;
+  
+	SET v_max_qty = LEAST(v_sell_size, v_buy_size);
+ 
+	IF v_max_qty > 0 AND v_buy_price > 0 AND v_sell_price > 0 AND v_sell_price - v_buy_price > 0 THEN
+		INSERT INTO `arbitrage`(buy_asset, buy_exchange, buy_price, max_qty, sell_asset, sell_exchange, sell_price) 
+			VALUES (v_buy_asset, v_buy_exchange, v_buy_price, v_max_qty, v_sell_asset, v_sell_exchange, v_sell_price);
+	END IF;
+ 
+ END LOOP get_asset_pair;
+ 
+ CLOSE asset_pair_cursor;
+ 
+ SELECT buy_asset as 'Buy', sell_asset as 'Against', buy_exchange as 'Buy Exchange', buy_price as 'Buy Rate', max_qty as 'Max Quantity', buy_asset as 'Sell', sell_asset as 'For', sell_exchange as 'Sell Exchange', sell_price as 'Sell Rate' FROM `arbitrage` ORDER BY (sell_price - buy_price)/buy_price DESC;
+
+ DROP TEMPORARY TABLE `arbitrage`;
+ 
+END$$
+ 
+DELIMITER ;

@@ -1,0 +1,33 @@
+extends layout
+
+block content
+  a(href='./fetchlatestquote' class='feedback' style="float:left;") Fetch Latest Quote Data
+  br
+  br
+  table.table-responsive.table.table-striped.table-bordered.table-sm
+      thead
+        tr
+          th Buy
+          th Against
+          th Buy Exchange
+          th Buy Rate
+          th Max Quantity
+          th Sell
+          th For
+          th Sell Exchange
+          th Sell Rate
+      tbody 
+      - var i = 0
+        - for (var a in arbitrage) {
+            tr
+              td=arbitrage[i]['Buy']
+              td=arbitrage[i]['Against']
+              td=arbitrage[i]['Buy Exchange']
+              td=arbitrage[i]['Buy Rate']
+              td=arbitrage[i]['Max Quantity']
+              td=arbitrage[i]['Sell']
+              td=arbitrage[i]['For']
+              td=arbitrage[i]['Sell Exchange']
+              td=arbitrage[i]['Sell Rate']
+            - i++
+        - } 

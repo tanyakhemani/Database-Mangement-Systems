@@ -1,0 +1,10 @@
+CREATE TABLE `quote` (
+  `exchange_id` varchar(100) NOT NULL,
+  `asset_id_base` varchar(10) NOT NULL,
+  `asset_id_quote` varchar(10) NOT NULL,
+  `ask_price` decimal(25,15) NOT NULL,
+  `ask_size` decimal(25,15) NOT NULL,
+  `bid_price` decimal(25,15) NOT NULL,
+  `bid_size` decimal(25,15) NOT NULL,
+  PRIMARY KEY (`exchange_id`,`asset_id_base`,`asset_id_quote`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;

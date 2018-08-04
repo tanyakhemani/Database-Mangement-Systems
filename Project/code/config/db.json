@@ -1,0 +1,7 @@
+{
+    "user": "cs540_hanwadip",
+    "password":"0171",
+    "database":"cs540_hanwadip",
+    "host":"classmysql.engr.oregonstate.edu",
+    "echo":true
+}

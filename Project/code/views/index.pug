@@ -1,0 +1,14 @@
+extends layout
+
+block content
+  table
+    for quote in quotes
+      tr
+        td=quote.exchange_id
+        td=quote.asset_id_base
+        td=quote.asset_id_quote
+        td=quote.ask_price
+        td=quote.ask_size
+        td=quote.bid_price
+        td=quote.bid_size
+        
